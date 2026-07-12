@@ -357,6 +357,12 @@ class Database(CoreDatabase, AuditMixinNullable, ImportExportMixin):  # pylint: 
                 encrypted_extra=encrypted_config,
             )
         except Exception:  # pylint: disable=broad-except
+            logger.warning(
+                "Unable to derive parameters from URI for database %s; "
+                "falling back to empty parameters",
+                self.database_name,
+                exc_info=True,
+            )
             parameters = {}
 
         return parameters
@@ -366,6 +372,12 @@ class Database(CoreDatabase, AuditMixinNullable, ImportExportMixin):  # pylint: 
         try:
             parameters_schema = self.db_engine_spec.parameters_json_schema()  # type: ignore
         except Exception:  # pylint: disable=broad-except
+            logger.warning(
+                "Unable to build parameters JSON schema for database %s; "
+                "falling back to empty schema",
+                self.database_name,
+                exc_info=True,
+            )
             parameters_schema = {}
         return parameters_schema
 
@@ -410,6 +422,12 @@ class Database(CoreDatabase, AuditMixinNullable, ImportExportMixin):  # pylint: 
         try:
             engine_information = self.db_engine_spec.get_public_information()
         except Exception:  # pylint: disable=broad-except
+            logger.warning(
+                "Unable to get engine information for database %s; "
+                "falling back to empty information",
+                self.database_name,
+                exc_info=True,
+            )
             engine_information = {}
         return engine_information
 

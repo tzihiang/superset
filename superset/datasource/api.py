@@ -351,6 +351,7 @@ class DatasourceRestApi(BaseSupersetApi):
                 ),
             )
         except Exception as ex:
+            logger.exception("Unexpected error validating expression")
             return self.response(500, message=f"Error validating expression: {str(ex)}")
 
     def _get_datasource_for_validation(
