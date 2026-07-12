@@ -31,7 +31,7 @@ import {
   type SelectValue,
 } from '@superset-ui/core/components';
 import { propertyComparator } from '@superset-ui/core/components/Select/utils';
-import { FilterPluginStyle, StatusMessage } from '../common';
+import { FilterPluginStyle, StatusMessage } from 'src/components/FilterPlugin';
 import { PluginFilterTimeGrainProps } from './types';
 
 export default function PluginFilterTimegrain(

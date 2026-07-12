@@ -21,7 +21,7 @@ import { styled } from '@apache-superset/core/theme';
 import { useCallback, useEffect } from 'react';
 import DateFilterControl from 'src/explore/components/controls/DateFilterControl';
 import { PluginFilterTimeProps } from './types';
-import { FilterPluginStyle } from '../common';
+import { FilterPluginStyle } from 'src/components/FilterPlugin';
 
 const TimeFilterStyles = styled(FilterPluginStyle)`
   display: flex;

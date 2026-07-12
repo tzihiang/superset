@@ -33,7 +33,7 @@ import { InputNumber } from '@superset-ui/core/components/Input';
 import Slider from '@superset-ui/core/components/Slider';
 import { FormItem, Tooltip, Icons } from '@superset-ui/core/components';
 import { PluginFilterRangeProps, RangeDisplayMode } from './types';
-import { StatusMessage, FilterPluginStyle } from '../common';
+import { FilterPluginStyle, StatusMessage } from 'src/components/FilterPlugin';
 import { getRangeExtraFormData } from '../../utils';
 import { SingleValueType } from './SingleValueType';
 

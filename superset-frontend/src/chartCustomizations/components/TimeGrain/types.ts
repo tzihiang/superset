@@ -19,7 +19,10 @@
 import { FilterState, QueryFormData, DataRecord } from '@superset-ui/core';
 import { RefObject } from 'react';
 import type { RefSelectProps } from '@superset-ui/core/components';
-import { PluginFilterHooks, PluginFilterStylesProps } from '../types';
+import {
+  PluginFilterHooks,
+  PluginFilterStylesProps,
+} from 'src/components/FilterPlugin';
 
 interface PluginFilterTimeGrainCustomizeProps {
   defaultValue?: string[] | null;

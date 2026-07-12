@@ -17,45 +17,9 @@
  * under the License.
  */
 import { ChartProps } from '@superset-ui/core';
-import { noOp } from 'src/utils/common';
+import { getFilterPluginProps } from 'src/components/FilterPlugin';
+import { PluginFilterRangeQueryFormData } from './types';
 
 export default function transformProps(chartProps: ChartProps) {
-  const {
-    formData,
-    height,
-    hooks,
-    queriesData,
-    width,
-    behaviors,
-    filterState,
-    inputRef,
-    displaySettings,
-  } = chartProps;
-  const {
-    setDataMask = noOp,
-    setFocusedFilter = noOp,
-    unsetFocusedFilter = noOp,
-    setHoveredFilter = noOp,
-    unsetHoveredFilter = noOp,
-    setFilterActive = noOp,
-  } = hooks;
-  const { data } = queriesData[0];
-
-  return {
-    data,
-    formData,
-    behaviors,
-    height,
-    setDataMask,
-    filterState,
-    width,
-    setHoveredFilter,
-    unsetHoveredFilter,
-    setFocusedFilter,
-    unsetFocusedFilter,
-    setFilterActive,
-    inputRef,
-    isOverflowingFilterBar: displaySettings?.isOverflowingFilterBar,
-    filterBarOrientation: displaySettings?.filterBarOrientation,
-  };
+  return getFilterPluginProps<PluginFilterRangeQueryFormData>(chartProps);
 }

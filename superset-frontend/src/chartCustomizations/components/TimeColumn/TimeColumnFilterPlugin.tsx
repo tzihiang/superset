@@ -25,7 +25,7 @@ import {
   type FormItemProps,
   Select,
 } from '@superset-ui/core/components';
-import { FilterPluginStyle, StatusMessage } from '../common';
+import { FilterPluginStyle, StatusMessage } from 'src/components/FilterPlugin';
 import { PluginFilterTimeColumnProps } from './types';
 
 export default function PluginFilterTimeColumn(

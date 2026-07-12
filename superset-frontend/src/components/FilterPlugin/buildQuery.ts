@@ -1,6 +1,3 @@
-import { SetDataMaskHook } from '@superset-ui/core';
-import { FilterBarOrientation } from 'src/dashboard/types';
-
 /**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -19,18 +16,18 @@ import { FilterBarOrientation } from 'src/dashboard/types';
  * specific language governing permissions and limitations
  * under the License.
  */
-export interface PluginFilterStylesProps {
-  height: number;
-  width: number;
-  orientation?: FilterBarOrientation;
-  overflow?: boolean;
-}
+import { buildQueryContext, QueryFormData } from '@superset-ui/core';
 
-export interface PluginFilterHooks {
-  setDataMask: SetDataMaskHook;
-  setFocusedFilter: () => void;
-  unsetFocusedFilter: () => void;
-  setHoveredFilter: () => void;
-  unsetHoveredFilter: () => void;
-  setFilterActive: (isActive: boolean) => void;
+type MetadataResultType = 'columns' | 'timegrains';
+
+export function createMetadataQuery(resultType: MetadataResultType) {
+  return (formData: QueryFormData) =>
+    buildQueryContext(formData, () => [
+      {
+        result_type: resultType,
+        columns: [],
+        metrics: [],
+        orderby: [],
+      },
+    ]);
 }

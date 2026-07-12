@@ -98,7 +98,7 @@ import {
   NativeFilterObject,
   DashboardTabsResponse,
 } from 'src/features/alerts/types';
-import { StatusMessage } from 'src/filters/components/common';
+import { StatusMessage } from 'src/components/FilterPlugin';
 import { useSelector } from 'react-redux';
 import { UserWithPermissionsAndRoles } from 'src/types/bootstrapTypes';
 import getBootstrapData from 'src/utils/getBootstrapData';

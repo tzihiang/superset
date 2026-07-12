@@ -23,6 +23,7 @@ import {
   ControlPanelConfig,
   sharedControls,
 } from '@superset-ui/chart-controls';
+import { createRequiredValueControl } from 'src/components/FilterPlugin';
 import { DEFAULT_FORM_DATA, SelectFilterOperatorType } from './types';
 
 const {
@@ -166,17 +167,12 @@ const config: ControlPanelConfig = {
           },
         ],
         [
-          {
-            name: 'enableEmptyFilter',
-            config: {
-              type: 'CheckboxControl',
-              label: () => t('Filter value is required'),
-              default: enableEmptyFilter,
-              renderTrigger: true,
-              description: () =>
-                t('User must select a value before applying the filter'),
-            },
-          },
+          createRequiredValueControl({
+            label: () => t('Filter value is required'),
+            description: () =>
+              t('User must select a value before applying the filter'),
+            defaultValue: enableEmptyFilter,
+          }),
         ],
         [
           {

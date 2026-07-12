@@ -18,6 +18,7 @@
  */
 import { ControlPanelConfig } from '@superset-ui/chart-controls';
 import { t } from '@apache-superset/core/translation';
+import { createRequiredValueControl } from 'src/components/FilterPlugin';
 
 const config: ControlPanelConfig = {
   controlPanelSections: [
@@ -59,19 +60,13 @@ const config: ControlPanelConfig = {
           },
         ],
         [
-          {
-            name: 'enableEmptyFilter',
-            config: {
-              type: 'CheckboxControl',
-              label: () => t('Chart customization value is required'),
-              default: false,
-              renderTrigger: true,
-              description: () =>
-                t(
-                  'User must select a value before applying the chart customization',
-                ),
-            },
-          },
+          createRequiredValueControl({
+            label: () => t('Chart customization value is required'),
+            description: () =>
+              t(
+                'User must select a value before applying the chart customization',
+              ),
+          }),
         ],
       ],
     },

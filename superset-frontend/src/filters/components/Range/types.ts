@@ -23,7 +23,10 @@ import {
   QueryFormData,
 } from '@superset-ui/core';
 import { RefObject } from 'react';
-import { PluginFilterHooks, PluginFilterStylesProps } from '../types';
+import {
+  PluginFilterHooks,
+  PluginFilterStylesProps,
+} from 'src/components/FilterPlugin';
 import { FilterBarOrientation } from '../../../dashboard/types';
 
 export enum RangeDisplayMode {

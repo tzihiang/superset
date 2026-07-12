@@ -17,7 +17,10 @@
  * under the License.
  */
 import { QueryFormData, FilterState } from '@superset-ui/core';
-import { PluginFilterHooks, PluginFilterStylesProps } from '../types';
+import {
+  PluginFilterHooks,
+  PluginFilterStylesProps,
+} from 'src/components/FilterPlugin';
 import { RefObject } from 'react';
 import type { RefSelectProps } from '@superset-ui/core/components';
 import { ColumnData, ColumnOption } from '../DynamicGroupBy/types';
