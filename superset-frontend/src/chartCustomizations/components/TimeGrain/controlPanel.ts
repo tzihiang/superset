@@ -16,8 +16,9 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { ControlPanelConfig } from '@superset-ui/chart-controls';
 import { t } from '@apache-superset/core/translation';
+import { ControlPanelConfig } from '@superset-ui/chart-controls';
+import { createRequiredValueControl } from 'src/components/FilterPlugin';
 
 const config: ControlPanelConfig = {
   controlPanelSections: [
@@ -26,17 +27,11 @@ const config: ControlPanelConfig = {
       expanded: true,
       controlSetRows: [
         [
-          {
-            name: 'enableEmptyFilter',
-            config: {
-              type: 'CheckboxControl',
-              label: () => t('Customization value is required'),
-              default: false,
-              renderTrigger: true,
-              description: () =>
-                t('User must select a value before applying the customization'),
-            },
-          },
+          createRequiredValueControl({
+            label: () => t('Customization value is required'),
+            description: () =>
+              t('User must select a value before applying the customization'),
+          }),
         ],
       ],
     },

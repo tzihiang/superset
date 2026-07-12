@@ -59,7 +59,7 @@ import {
   setHoveredChartCustomization,
   unsetHoveredChartCustomization,
 } from 'src/dashboard/actions/nativeFilters';
-import { RESPONSIVE_WIDTH } from 'src/filters/components/common';
+import { RESPONSIVE_WIDTH } from 'src/components/FilterPlugin';
 import { dispatchHoverAction, dispatchFocusAction } from './utils';
 import { FilterControlProps } from './types';
 import { getFormData } from '../../utils';

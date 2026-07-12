@@ -21,6 +21,7 @@ import {
   ControlPanelConfig,
   sharedControls,
 } from '@superset-ui/chart-controls';
+import { createRequiredValueControl } from 'src/components/FilterPlugin';
 import { SingleValueType } from './SingleValueType';
 
 const config: ControlPanelConfig = {
@@ -46,17 +47,11 @@ const config: ControlPanelConfig = {
       expanded: true,
       controlSetRows: [
         [
-          {
-            name: 'enableEmptyFilter',
-            config: {
-              type: 'CheckboxControl',
-              label: () => t('Filter value is required'),
-              default: false,
-              renderTrigger: true,
-              description: () =>
-                t('User must select a value before applying the filter'),
-            },
-          },
+          createRequiredValueControl({
+            label: () => t('Filter value is required'),
+            description: () =>
+              t('User must select a value before applying the filter'),
+          }),
           {
             name: 'enableSingleValue',
             config: {

@@ -21,6 +21,7 @@ import {
   sharedControls,
 } from '@superset-ui/chart-controls';
 import { t } from '@apache-superset/core/translation';
+import { createRequiredValueControl } from 'src/components/FilterPlugin';
 
 const config: ControlPanelConfig = {
   // For control input types, see: superset-frontend/src/explore/components/controls/index.js
@@ -46,17 +47,11 @@ const config: ControlPanelConfig = {
       expanded: true,
       controlSetRows: [
         [
-          {
-            name: 'enableEmptyFilter',
-            config: {
-              type: 'CheckboxControl',
-              label: () => t('Filter value is required'),
-              default: false,
-              renderTrigger: true,
-              description: () =>
-                t('User must select a value before applying the filter'),
-            },
-          },
+          createRequiredValueControl({
+            label: () => t('Filter value is required'),
+            description: () =>
+              t('User must select a value before applying the filter'),
+          }),
         ],
       ],
     },

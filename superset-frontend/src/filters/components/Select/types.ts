@@ -28,7 +28,10 @@ import {
 import { GenericDataType } from '@apache-superset/core/common';
 import { RefObject } from 'react';
 import { FilterBarOrientation } from 'src/dashboard/types';
-import { PluginFilterHooks, PluginFilterStylesProps } from '../types';
+import {
+  PluginFilterHooks,
+  PluginFilterStylesProps,
+} from 'src/components/FilterPlugin';
 
 export type SelectValue = (number | string | null)[] | null | undefined;
 

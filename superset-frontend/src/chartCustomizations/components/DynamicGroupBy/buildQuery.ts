@@ -16,15 +16,6 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { buildQueryContext, QueryFormData } from '@superset-ui/core';
+import { createMetadataQuery } from 'src/components/FilterPlugin';
 
-export default function buildQuery(formData: QueryFormData) {
-  return buildQueryContext(formData, () => [
-    {
-      result_type: 'columns',
-      columns: [],
-      metrics: [],
-      orderby: [],
-    },
-  ]);
-}
+export default createMetadataQuery('columns');

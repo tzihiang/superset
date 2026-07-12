@@ -23,7 +23,10 @@ import {
   FilterState,
   QueryFormData,
 } from '@superset-ui/core';
-import { PluginFilterHooks, PluginFilterStylesProps } from '../types';
+import {
+  PluginFilterHooks,
+  PluginFilterStylesProps,
+} from 'src/components/FilterPlugin';
 
 interface PluginFilterTimeCustomizeProps {
   defaultValue?: string | null;

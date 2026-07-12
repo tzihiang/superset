@@ -16,13 +16,27 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { ChartProps } from '@superset-ui/core';
-import { getFilterPluginProps } from 'src/components/FilterPlugin';
-import { DEFAULT_FORM_DATA, PluginFilterSelectQueryFormData } from './types';
+import { CustomControlItem } from '@superset-ui/chart-controls';
 
-export default function transformProps(chartProps: ChartProps) {
-  return getFilterPluginProps<PluginFilterSelectQueryFormData>(
-    chartProps,
-    DEFAULT_FORM_DATA,
-  );
+type RequiredValueControlOptions = {
+  label: () => string;
+  description: () => string;
+  defaultValue?: boolean;
+};
+
+export function createRequiredValueControl({
+  label,
+  description,
+  defaultValue = false,
+}: RequiredValueControlOptions): CustomControlItem {
+  return {
+    name: 'enableEmptyFilter',
+    config: {
+      type: 'CheckboxControl',
+      label,
+      default: defaultValue,
+      renderTrigger: true,
+      description,
+    },
+  };
 }

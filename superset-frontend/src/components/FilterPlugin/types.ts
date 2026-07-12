@@ -16,13 +16,21 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { ChartProps } from '@superset-ui/core';
-import { getFilterPluginProps } from 'src/components/FilterPlugin';
-import { DEFAULT_FORM_DATA, PluginFilterSelectQueryFormData } from './types';
+import { SetDataMaskHook } from '@superset-ui/core';
+import { FilterBarOrientation } from 'src/dashboard/types';
 
-export default function transformProps(chartProps: ChartProps) {
-  return getFilterPluginProps<PluginFilterSelectQueryFormData>(
-    chartProps,
-    DEFAULT_FORM_DATA,
-  );
+export interface PluginFilterStylesProps {
+  height: number;
+  width: number;
+  orientation?: FilterBarOrientation;
+  overflow?: boolean;
+}
+
+export interface PluginFilterHooks {
+  setDataMask: SetDataMaskHook;
+  setFocusedFilter: () => void;
+  unsetFocusedFilter: () => void;
+  setHoveredFilter: () => void;
+  unsetHoveredFilter: () => void;
+  setFilterActive: (isActive: boolean) => void;
 }

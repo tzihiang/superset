@@ -47,7 +47,7 @@ import {
 } from '@superset-ui/core/components/Select/utils';
 import { FilterBarOrientation } from 'src/dashboard/types';
 import { getDataRecordFormatter, getSelectExtraFormData } from '../../utils';
-import { FilterPluginStyle, StatusMessage } from '../common';
+import { FilterPluginStyle, StatusMessage } from 'src/components/FilterPlugin';
 import {
   PluginFilterSelectProps,
   SelectFilterOperatorType,

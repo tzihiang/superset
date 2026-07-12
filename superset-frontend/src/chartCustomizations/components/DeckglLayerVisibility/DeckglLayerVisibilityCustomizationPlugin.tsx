@@ -29,7 +29,7 @@ import { useSelector } from 'react-redux';
 import { createSelector } from '@reduxjs/toolkit';
 import { PluginDeckglLayerVisibilityProps } from './types';
 import { useDeckLayerMetadata } from './useDeckLayerMetadata';
-import { FilterPluginStyle, StatusMessage } from '../common';
+import { FilterPluginStyle, StatusMessage } from 'src/components/FilterPlugin';
 import { Slice } from 'src/dashboard/types';
 
 type SliceEntitiesState = {
