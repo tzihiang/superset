@@ -68,10 +68,7 @@ export function commonLayerProps({
 }) {
   const fd = formData;
   let onHover;
-  let tooltipContentGenerator = setTooltipContent;
-  if (fd.js_tooltip) {
-    tooltipContentGenerator = sandboxedEval(fd.js_tooltip);
-  }
+  const tooltipContentGenerator = setTooltipContent;
   if (tooltipContentGenerator) {
     let currentTooltipContent: ReactNode = null;
 

@@ -103,22 +103,11 @@ describe('commonLayerProps', () => {
   ) as any;
   const mockOnSelect = jest.fn();
 
-  test('returns correct props when js_tooltip is provided', () => {
+  test('ignores js_tooltip and uses the configured tooltip content', () => {
     const formData = {
       ...partialformData,
-      js_tooltip: 'tooltip => tooltip.content',
+      js_tooltip: '() => "unsafe tooltip"',
     } as QueryFormData;
-    const props = commonLayerProps({
-      formData,
-      setTooltip: mockSetTooltip,
-      setTooltipContent: mockSetTooltipContent,
-    });
-    expect(props.pickable).toBe(true);
-    expect(props.onHover).toBeDefined();
-  });
-
-  test('calls onHover and sets tooltip', () => {
-    const formData = { ...partialformData, js_tooltip: null } as QueryFormData;
     const props = commonLayerProps({
       formData,
       setTooltip: mockSetTooltip,
@@ -127,6 +116,7 @@ describe('commonLayerProps', () => {
 
     const mockObject = { picked: true, x: 10, y: 20 };
     props.onHover?.(mockObject);
+    expect(mockSetTooltipContent).toHaveBeenCalledWith(mockObject);
     expect(mockSetTooltip).toHaveBeenCalledWith({
       content: expect.any(Function), // Matches any function
       x: 10,

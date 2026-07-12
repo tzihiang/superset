@@ -30,7 +30,6 @@ import {
   jsColumns,
   jsDataMutator,
   jsOnclickHref,
-  jsTooltip,
   mapboxStyle,
   maplibreStyle,
   mapProvider,
@@ -103,12 +102,7 @@ const config: ControlPanelConfig = {
     },
     {
       label: t('Advanced'),
-      controlSetRows: [
-        [jsColumns],
-        [jsDataMutator],
-        [jsTooltip],
-        [jsOnclickHref],
-      ],
+      controlSetRows: [[jsColumns], [jsDataMutator], [jsOnclickHref]],
     },
   ],
   formDataOverrides: formData => ({

@@ -237,7 +237,6 @@ class TestImportChartsCommand(SupersetTestCase):
             "js_columns": ["color"],
             "js_data_mutator": "data => data.map(d => ({\\n    ...d,\\n    color: colors.hexToRGB(d.extraProps.color)\\n}));",  # noqa: E501
             "js_onclick_href": "",
-            "js_tooltip": "",
             "line_column": "path_json",
             "line_type": "json",
             "line_width": 150,

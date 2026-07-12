@@ -86,7 +86,6 @@ export const ScreengridChartViz = ({
       color_picker: { a: 1, b: 0, g: 255, r: 14 },
       js_columns: [],
       js_data_mutator: '',
-      js_tooltip: '',
       js_onclick_href: '',
     }}
   />

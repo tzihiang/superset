@@ -28,7 +28,6 @@ import {
   autozoom,
   jsColumns,
   jsDataMutator,
-  jsTooltip,
   jsOnclickHref,
   gridSize,
   viewport,
@@ -96,12 +95,7 @@ const config: ControlPanelConfig = {
     },
     {
       label: t('Advanced'),
-      controlSetRows: [
-        [jsColumns],
-        [jsDataMutator],
-        [jsTooltip],
-        [jsOnclickHref],
-      ],
+      controlSetRows: [[jsColumns], [jsDataMutator], [jsOnclickHref]],
     },
   ],
   controlOverrides: {

@@ -32,7 +32,6 @@ params:
   js_columns: []
   js_data_mutator: ''
   js_onclick_href: ''
-  js_tooltip: ''
   legend_format: .1s
   legend_position: tr
   line_column: contour

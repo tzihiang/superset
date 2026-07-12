@@ -94,7 +94,6 @@ export const GridChartViz = ({
       extruded,
       js_columns: [],
       js_data_mutator: '',
-      js_tooltip: '',
       js_onclick_href: '',
     }}
   />

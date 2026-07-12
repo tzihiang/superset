@@ -25,7 +25,6 @@ import {
   autozoom,
   jsColumns,
   jsDataMutator,
-  jsTooltip,
   jsOnclickHref,
   legendFormat,
   legendPosition,
@@ -146,12 +145,7 @@ const config: ControlPanelConfig = {
     },
     {
       label: t('Advanced'),
-      controlSetRows: [
-        [jsColumns],
-        [jsDataMutator],
-        [jsTooltip],
-        [jsOnclickHref],
-      ],
+      controlSetRows: [[jsColumns], [jsDataMutator], [jsOnclickHref]],
     },
   ],
   controlOverrides: {

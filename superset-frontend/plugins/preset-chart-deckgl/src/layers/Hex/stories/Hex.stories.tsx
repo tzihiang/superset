@@ -95,7 +95,6 @@ export const HexChartViz = ({
       js_agg_function: 'sum',
       js_columns: [],
       js_data_mutator: '',
-      js_tooltip: '',
       js_onclick_href: '',
     }}
   />

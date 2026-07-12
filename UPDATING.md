@@ -24,6 +24,12 @@ assists people when migrating to a new version.
 
 ## Next
 
+### Deck.gl JavaScript tooltip generators removed
+
+The `js_tooltip` form-data option has been removed from all Deck.gl charts.
+Existing JavaScript tooltip generators are ignored. Use the Handlebars-based
+tooltip template control to customize tooltip content.
+
 ### Owners, dashboard roles, and RLS roles replaced by Subjects
 
 Superset now uses subject-based access assignments for dashboards, charts, datasets,
