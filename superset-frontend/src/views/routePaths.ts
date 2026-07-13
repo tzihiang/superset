@@ -44,6 +44,7 @@ export const RoutePaths = {
   EXPLORE: '/explore/',
   EXPLORE_PERMALINK: '/explore/p',
   DATASET_ADD: '/dataset/add/',
+  DATASET_RELATIONSHIPS: '/dataset/relationships/',
   DATASET: '/dataset/:datasetId',
   ROW_LEVEL_SECURITY: '/rowlevelsecurity/list',
   TASKS: '/tasks/list/',

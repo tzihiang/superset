@@ -137,6 +137,13 @@ const RowLevelSecurityList = lazyWithRetry(
     ),
 );
 
+const DatasetRelationships = lazyWithRetry(
+  () =>
+    import(
+      /* webpackChunkName: "DatasetRelationships" */ 'src/pages/DatasetRelationships'
+    ),
+);
+
 const TaskList = lazyWithRetry(
   () => import(/* webpackChunkName: "TaskList" */ 'src/pages/TaskList'),
 );
@@ -227,6 +234,14 @@ export const routes: Routes = [
   { path: RoutePaths.EXPLORE, Component: Chart },
   { path: RoutePaths.EXPLORE_PERMALINK, Component: Chart },
   { path: RoutePaths.DATASET_ADD, Component: DatasetCreation },
+  ...(isFeatureEnabled(FeatureFlag.DatasetRelationships)
+    ? [
+        {
+          path: RoutePaths.DATASET_RELATIONSHIPS,
+          Component: DatasetRelationships,
+        },
+      ]
+    : []),
   { path: RoutePaths.DATASET, Component: DatasetCreation },
   { path: RoutePaths.ROW_LEVEL_SECURITY, Component: RowLevelSecurityList },
   { path: RoutePaths.TASKS, Component: TaskList },
