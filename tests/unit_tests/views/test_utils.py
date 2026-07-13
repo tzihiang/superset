@@ -46,3 +46,15 @@ def test_get_form_data_strips_js_control_keys() -> None:
         assert key not in form_data
     # Non-JS keys are preserved.
     assert form_data["viz_type"] == "deck_geojson"
+
+
+def test_get_form_data_always_strips_removed_js_tooltip() -> None:
+    """get_form_data drops the removed JavaScript tooltip generator."""
+    form_data, _ = get_form_data(
+        initial_form_data={
+            "js_tooltip": "input => input.object.name",
+            "viz_type": "deck_geojson",
+        },
+    )
+
+    assert "js_tooltip" not in form_data

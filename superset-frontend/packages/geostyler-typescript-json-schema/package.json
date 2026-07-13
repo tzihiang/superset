@@ -1,0 +1,7 @@
+{
+  "name": "typescript-json-schema",
+  "version": "0.0.0-superset",
+  "private": true,
+  "description": "Compatibility package replacing GeoStyler's unused runtime dependency.",
+  "license": "Apache-2.0"
+}

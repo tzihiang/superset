@@ -267,16 +267,6 @@ export const jsDataMutator = {
   ),
 };
 
-export const jsTooltip = {
-  name: 'js_tooltip',
-  config: jsFunctionControl(
-    t('JavaScript tooltip generator'),
-    t(
-      'Define a function that receives the input and outputs the content for a tooltip',
-    ),
-  ),
-};
-
 export const jsOnclickHref = {
   name: 'js_onclick_href',
   config: jsFunctionControl(

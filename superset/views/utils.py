@@ -71,16 +71,15 @@ stats_logger = app.config["STATS_LOGGER"]
 # is enabled. Keep this list in sync with every ``sandboxedEval(fd.<key>)`` call
 # site in the deck.gl plugins.
 JS_CONTROL_FORM_DATA_KEYS: list[str] = [
-    "js_tooltip",
     "js_onclick_href",
     "js_data_mutator",
     "label_javascript_config_generator",
     "icon_javascript_config_generator",
 ]
 
-REJECTED_FORM_DATA_KEYS: list[str] = []
+REJECTED_FORM_DATA_KEYS: list[str] = ["js_tooltip"]
 if not feature_flag_manager.is_feature_enabled("ENABLE_JAVASCRIPT_CONTROLS"):
-    REJECTED_FORM_DATA_KEYS = list(JS_CONTROL_FORM_DATA_KEYS)
+    REJECTED_FORM_DATA_KEYS.extend(JS_CONTROL_FORM_DATA_KEYS)
 
 
 def redirect_to_login(next_target: str | None = None) -> FlaskResponse:
