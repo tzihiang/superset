@@ -34,6 +34,12 @@
         "description": "Allow metrics and columns to be grouped into folders in the chart builder"
       },
       {
+        "name": "DATASET_RELATIONSHIPS",
+        "default": false,
+        "lifecycle": "development",
+        "description": "Declare and visualize relationships between datasets"
+      },
+      {
         "name": "DATE_RANGE_TIMESHIFTS_ENABLED",
         "default": false,
         "lifecycle": "development",

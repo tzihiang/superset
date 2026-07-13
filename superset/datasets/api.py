@@ -1543,6 +1543,17 @@ class DatasetRestApi(SoftDeleteApiMixin, BaseSupersetModelRestApi):
         ):
             del response[API_RESULT_RES_KEY]["folders"]
 
+        if is_feature_enabled("DATASET_RELATIONSHIPS"):
+            from superset.daos.dataset_relationship import (  # pylint: disable=import-outside-toplevel
+                DatasetRelationshipDAO,
+                serialize_relationship,
+            )
+
+            response[API_RESULT_RES_KEY]["relationships"] = [
+                serialize_relationship(relationship)
+                for relationship in DatasetRelationshipDAO.find_accessible(table.id)
+            ]
+
         if parse_boolean_string(request.args.get("include_rendered_sql")):
             try:
                 processor = get_template_processor(database=table.database, table=table)

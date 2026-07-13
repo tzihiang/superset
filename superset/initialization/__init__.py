@@ -266,6 +266,10 @@ class SupersetAppInitializer:  # pylint: disable=too-many-public-methods
         appbuilder.add_api(DatasetRestApi)
         appbuilder.add_api(DatasetColumnsRestApi)
         appbuilder.add_api(DatasetMetricRestApi)
+        if feature_flag_manager.is_feature_enabled("DATASET_RELATIONSHIPS"):
+            from superset.dataset_relationship.api import DatasetRelationshipRestApi
+
+            appbuilder.add_api(DatasetRelationshipRestApi)
         appbuilder.add_api(DatasourceRestApi)
         appbuilder.add_api(EmbeddedDashboardRestApi)
         appbuilder.add_api(ExploreRestApi)
