@@ -15,12 +15,17 @@
 # specific language governing permissions and limitations
 # under the License.
 
+import atexit
 import base64
 import binascii
+import hashlib
 import logging
 import socket
+import threading
+from collections.abc import Iterator
+from contextlib import AbstractContextManager, contextmanager
 from io import StringIO
-from typing import TYPE_CHECKING
+from typing import Any, TYPE_CHECKING
 
 import paramiko
 import sshtunnel
@@ -105,6 +110,135 @@ def _parse_authorized_key(authorized_key: str) -> paramiko.PKey:
         raise ValueError(f"Host key could not be parsed: {ex}") from ex
 
 
+def _safe_stop(forwarder: "sshtunnel.SSHTunnelForwarder | None") -> None:
+    """Stop a forwarder, swallowing errors so pool bookkeeping always proceeds."""
+    if forwarder is None:
+        return
+    try:
+        forwarder.stop()
+    except Exception as ex:  # noqa: BLE001
+        logger.warning("Error while stopping pooled SSH tunnel: %s", ex)
+
+
+def _tunnel_cache_key(params: dict[str, Any]) -> str:
+    """
+    Build a stable cache key identifying a tunnel by its connection parameters.
+
+    Auth material is part of the identity (a credential change must force a new
+    tunnel) but is folded in as a fingerprint rather than stored verbatim, so
+    secrets never appear in the in-memory key or in any repr/log of the pool.
+    """
+    pkey = params.get("ssh_pkey")
+    pkey_fingerprint = pkey.get_base64() if pkey is not None else None
+    host_key = params.get("ssh_host_key")
+    host_key_fingerprint = host_key.get_base64() if host_key is not None else None
+    password = params.get("ssh_password")
+    password_fingerprint = (
+        hashlib.sha256(password.encode()).hexdigest() if password else None
+    )
+    material = repr(
+        (
+            params.get("ssh_address_or_host"),
+            params.get("ssh_username"),
+            params.get("remote_bind_address"),
+            params.get("local_bind_address"),
+            password_fingerprint,
+            pkey_fingerprint,
+            host_key_fingerprint,
+        )
+    )
+    return hashlib.sha256(material.encode()).hexdigest()
+
+
+@contextmanager
+def _keep_alive(
+    forwarder: "sshtunnel.SSHTunnelForwarder",
+) -> "Iterator[sshtunnel.SSHTunnelForwarder]":
+    """
+    Yield an already-running pooled forwarder without stopping it on exit, so it
+    stays in the pool to be reused by later requests.
+    """
+    yield forwarder
+
+
+class _PooledTunnel:
+    """A pool slot holding a single forwarder plus a lock guarding its lifecycle."""
+
+    __slots__ = ("forwarder", "lock")
+
+    def __init__(self) -> None:
+        self.forwarder: sshtunnel.SSHTunnelForwarder | None = None
+        self.lock = threading.Lock()
+
+
+class SSHTunnelPool:
+    """
+    Process-local pool of long-lived SSH tunnels keyed by connection parameters.
+
+    A tunnel is opened lazily on first use and then kept running so subsequent
+    requests reuse the same connection instead of paying the TCP + SSH handshake
+    (and risking server-side rate limiting) on every query. Dead tunnels are
+    detected on acquisition and transparently reopened.
+    """
+
+    def __init__(self) -> None:
+        self._entries: dict[str, _PooledTunnel] = {}
+        # Guards ``_entries`` only, held briefly. Per-tunnel (re)start blocks on
+        # the SSH handshake and is serialized by each entry's own lock instead, so
+        # that opening one tunnel never stalls acquisitions for unrelated tunnels.
+        self._lock = threading.Lock()
+        atexit.register(self.close_all)
+
+    def _get_entry(self, key: str) -> _PooledTunnel:
+        with self._lock:
+            entry = self._entries.get(key)
+            if entry is None:
+                entry = _PooledTunnel()
+                self._entries[key] = entry
+            return entry
+
+    @staticmethod
+    def _is_healthy(forwarder: "sshtunnel.SSHTunnelForwarder | None") -> bool:
+        if forwarder is None or not forwarder.is_active:
+            return False
+        try:
+            forwarder.check_tunnels()
+        except Exception:  # noqa: BLE001
+            return False
+        return all(forwarder.tunnel_is_up.values())
+
+    def acquire(self, params: dict[str, Any]) -> "sshtunnel.SSHTunnelForwarder":
+        """
+        Return a running forwarder for ``params``, reusing a healthy pooled tunnel
+        when possible and (re)opening one otherwise.
+        """
+        key = _tunnel_cache_key(params)
+        entry = self._get_entry(key)
+        with entry.lock:
+            if not self._is_healthy(entry.forwarder):
+                # Drop any stale forwarder before replacing it so we don't leak its
+                # background threads / sockets.
+                _safe_stop(entry.forwarder)
+                forwarder = sshtunnel.open_tunnel(**params)
+                forwarder.start()
+                entry.forwarder = forwarder
+                logger.info(
+                    "[SSH] Opened pooled tunnel at %s",
+                    forwarder.local_bind_address,
+                )
+            return entry.forwarder
+
+    def close_all(self) -> None:
+        """Stop and forget every pooled tunnel (used on shutdown)."""
+        with self._lock:
+            entries = list(self._entries.values())
+            self._entries.clear()
+        for entry in entries:
+            with entry.lock:
+                _safe_stop(entry.forwarder)
+                entry.forwarder = None
+
+
 class SSHManager:
     def __init__(self, app: Flask) -> None:
         super().__init__()
@@ -114,6 +248,14 @@ class SSHManager:
         )
         sshtunnel.TUNNEL_TIMEOUT = app.config["SSH_TUNNEL_TIMEOUT_SEC"]
         sshtunnel.SSH_TIMEOUT = app.config["SSH_TUNNEL_PACKET_TIMEOUT_SEC"]
+
+        # Opening a fresh SSH tunnel for every engine checkout is expensive: each
+        # query pays the full TCP + SSH handshake cost and can trigger connection
+        # rate-limiting on the SSH server. When pooling is enabled (the default),
+        # tunnels are kept alive and reused across requests within a worker
+        # process, keyed by their connection parameters.
+        self.pool_connections = app.config.get("SSH_TUNNEL_POOL_CONNECTIONS", True)
+        self._tunnel_pool = SSHTunnelPool() if self.pool_connections else None
 
     def build_sqla_url(
         self, sqlalchemy_url: str, server: sshtunnel.SSHTunnelForwarder
@@ -206,11 +348,11 @@ class SSHManager:
 
         return expected_key
 
-    def create_tunnel(
+    def _build_tunnel_params(
         self,
         ssh_tunnel: "SSHTunnel",
         sqlalchemy_database_uri: str,
-    ) -> sshtunnel.SSHTunnelForwarder:
+    ) -> dict[str, Any]:
         # Deferred import to break a circular import:
         # superset.utils.ssh_tunnel -> superset.databases.ssh_tunnel.models
         # -> superset.extensions -> superset.extensions.ssh (this module).
@@ -227,7 +369,7 @@ class SSHManager:
         # connection below.
         expected_host_key = self._verify_host_key(ssh_tunnel)
 
-        params = {
+        params: dict[str, Any] = {
             "ssh_address_or_host": (ssh_tunnel.server_address, ssh_tunnel.server_port),
             "ssh_username": ssh_tunnel.username,
             "remote_bind_address": (url.host, port),
@@ -250,7 +392,32 @@ class SSHManager:
                 ssh_tunnel.private_key, ssh_tunnel.private_key_password
             )
 
-        return sshtunnel.open_tunnel(**params)
+        return params
+
+    def create_tunnel(
+        self,
+        ssh_tunnel: "SSHTunnel",
+        sqlalchemy_database_uri: str,
+    ) -> AbstractContextManager[sshtunnel.SSHTunnelForwarder]:
+        """
+        Return a context manager that yields a running
+        :class:`sshtunnel.SSHTunnelForwarder`.
+
+        When connection pooling is enabled (the default), the forwarder is drawn
+        from a per-process pool and kept alive after the context exits so it can be
+        reused by subsequent requests. When disabled, a fresh tunnel is opened on
+        enter and torn down on exit (the historical behavior).
+        """
+        params = self._build_tunnel_params(ssh_tunnel, sqlalchemy_database_uri)
+
+        if self._tunnel_pool is None:
+            # ``open_tunnel`` returns a forwarder that is itself a context manager:
+            # ``__enter__`` starts the tunnel and ``__exit__`` stops it.
+            return sshtunnel.open_tunnel(**params)
+
+        # Pooled path: reuse (or open) a long-lived tunnel and hand back a context
+        # manager that keeps it alive on exit.
+        return _keep_alive(self._tunnel_pool.acquire(params))
 
 
 class SSHManagerFactory:

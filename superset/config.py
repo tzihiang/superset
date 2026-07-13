@@ -965,6 +965,15 @@ SSH_TUNNEL_PACKET_TIMEOUT_SEC = 1.0
 #: ``server_host_key`` are still verified regardless of this flag.
 SSH_TUNNEL_STRICT_HOST_KEY_CHECKING: bool = False
 
+#: Reuse (pool) SSH tunnels across requests instead of opening a fresh tunnel for
+#: every engine checkout. When enabled (the default), each worker process keeps a
+#: long-lived tunnel per unique set of connection parameters and reuses it, which
+#: avoids paying the TCP + SSH handshake on every query and prevents connection
+#: rate-limiting on the SSH server. Dead tunnels are detected and reopened
+#: automatically. Set to ``False`` to restore the previous open-per-request
+#: behavior.
+SSH_TUNNEL_POOL_CONNECTIONS: bool = True
+
 
 # Feature flags may also be set via 'SUPERSET_FEATURE_' prefixed environment vars.
 DEFAULT_FEATURE_FLAGS.update(
