@@ -18,7 +18,7 @@
  */
 import 'src/public-path';
 
-import { lazy, Suspense, useEffect } from 'react';
+import { Suspense, useEffect } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { BrowserRouter as Router, Route } from 'react-router-dom';
 import { Global } from '@emotion/react';
@@ -32,6 +32,7 @@ import {
 } from '@apache-superset/core/theme';
 import Switchboard from '@superset-ui/switchboard';
 import getBootstrapData, { applicationRoot } from 'src/utils/getBootstrapData';
+import lazyWithRetry from 'src/utils/lazyWithRetry';
 import initPreamble from 'src/preamble';
 import { setupAGGridModules } from '@superset-ui/core/components/ThemedAgGridReact';
 import setupClient from 'src/setup/setupClient';
@@ -80,7 +81,7 @@ function log(...info: unknown[]) {
   if (debugMode) logging.debug(`[superset]`, ...info);
 }
 
-const LazyDashboardPage = lazy(
+const LazyDashboardPage = lazyWithRetry(
   () =>
     import(
       /* webpackChunkName: "DashboardPage" */ 'src/dashboard/containers/DashboardPage'
