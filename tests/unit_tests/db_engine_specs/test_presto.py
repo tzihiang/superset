@@ -156,6 +156,47 @@ def test_where_latest_partition(
     )
 
 
+def test_partition_query_escapes_filter_values() -> None:
+    """
+    Test that ``_partition_query`` escapes single quotes in filter values so a
+    crafted value cannot break out of the string literal (SQL injection).
+    """
+    from superset.db_engine_specs.presto import PrestoEngineSpec
+
+    database = mock.MagicMock()
+    database.get_extra.return_value = {}
+
+    sql = PrestoEngineSpec._partition_query(
+        table=Table("my_table", "my_schema"),
+        indexes=[{"column_names": ["ds", "event_type"]}],
+        database=database,
+        filters={"event_type": "click' UNION SELECT secret FROM vault--"},
+    )
+    assert "event_type = 'click'' UNION SELECT secret FROM vault--'" in sql
+    # The value must not terminate the string literal early.
+    assert "click' UNION" not in sql
+
+
+def test_latest_sub_partition_rejects_unknown_field() -> None:
+    """
+    Test that ``latest_sub_partition`` rejects kwargs whose field name is not
+    part of the partitioning key, closing the broken validation guard.
+    """
+    from superset.db_engine_specs.presto import PrestoEngineSpec
+    from superset.exceptions import SupersetTemplateException
+
+    database = mock.MagicMock()
+    indexes = [{"column_names": ["ds", "event_type"]}]
+
+    with pytest.raises(SupersetTemplateException, match="is not part of the"):
+        PrestoEngineSpec.latest_sub_partition(
+            database=database,
+            table=Table("my_table", "my_schema"),
+            indexes=indexes,
+            not_a_field="val' UNION SELECT secret FROM other_table--",
+        )
+
+
 def test_adjust_engine_params_fully_qualified() -> None:
     """
     Test the ``adjust_engine_params`` method when the URL has catalog and schema.

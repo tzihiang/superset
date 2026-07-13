@@ -498,7 +498,10 @@ class PrestoBaseEngineSpec(BaseEngineSpec, metaclass=ABCMeta):
         if filters:
             l = []  # noqa: E741
             for field, value in filters.items():
-                l.append(f"{field} = '{value}'")
+                # Escape single quotes in the value to prevent SQL injection.
+                # Presto/Trino use doubled single quotes as the literal escape.
+                escaped_value = str(value).replace("'", "''")
+                l.append(f"{field} = '{escaped_value}'")
             where_clause = "WHERE " + " AND ".join(l)
 
         # Partition select syntax changed in v0.199, so check here.
@@ -672,7 +675,7 @@ class PrestoBaseEngineSpec(BaseEngineSpec, metaclass=ABCMeta):
 
         part_fields = indexes[0]["column_names"]
         for k in kwargs.keys():  # pylint: disable=consider-iterating-dictionary
-            if k not in k in part_fields:  # pylint: disable=comparison-with-itself
+            if k not in part_fields:
                 msg = f"Field [{k}] is not part of the portioning key"
                 raise SupersetTemplateException(msg)
         if len(kwargs.keys()) != len(part_fields) - 1:
