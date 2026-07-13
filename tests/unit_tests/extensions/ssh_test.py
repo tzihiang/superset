@@ -44,7 +44,7 @@ from superset.commands.database.ssh_tunnel.exceptions import (
 from superset.extensions.ssh import SSHManager, SSHManagerFactory
 
 
-def _make_manager(strict: bool = False) -> SSHManager:
+def _make_manager(strict: bool = False, pool: bool = True) -> SSHManager:
     """Build an ``SSHManager`` test instance with configurable strict checking."""
     app = Mock()
     app.config = {
@@ -54,6 +54,7 @@ def _make_manager(strict: bool = False) -> SSHManager:
         "SSH_TUNNEL_PACKET_TIMEOUT_SEC": 321.0,
         "SSH_TUNNEL_MANAGER_CLASS": "superset.extensions.ssh.SSHManager",
         "SSH_TUNNEL_STRICT_HOST_KEY_CHECKING": strict,
+        "SSH_TUNNEL_POOL_CONNECTIONS": pool,
     }
     return SSHManager(app)
 
@@ -426,6 +427,140 @@ def test_create_tunnel_without_host_key_does_not_pin(mock_open_tunnel: Mock) -> 
 
     _, kwargs = mock_open_tunnel.call_args
     assert "ssh_host_key" not in kwargs
+
+
+def _fake_forwarder(local_port: int = 1234, active: bool = True) -> Mock:
+    """A mock ``SSHTunnelForwarder`` that reports itself healthy by default."""
+    forwarder = Mock()
+    forwarder.is_active = active
+    forwarder.tunnel_is_up = {("127.0.0.1", local_port): True}
+    forwarder.local_bind_address = ("127.0.0.1", local_port)
+    forwarder.local_bind_port = local_port
+    return forwarder
+
+
+def _pool_tunnel() -> Mock:
+    """A mocked SSH tunnel with no host-key verification and no auth material."""
+    tunnel = _ssh_tunnel(None)
+    tunnel.username = "user"
+    tunnel.password = None
+    tunnel.private_key = None
+    return tunnel
+
+
+@patch("superset.extensions.ssh.sshtunnel.open_tunnel")
+def test_pooled_tunnel_is_reused_across_calls(mock_open_tunnel: Mock) -> None:
+    """Repeated create_tunnel calls with identical params reuse one live tunnel."""
+    forwarder = _fake_forwarder()
+    mock_open_tunnel.return_value = forwarder
+    manager = _make_manager(pool=True)
+    tunnel = _pool_tunnel()
+
+    for _ in range(3):
+        with manager.create_tunnel(
+            tunnel, "postgresql://u:p@db.example.com:5432/ex"
+        ) as ctx:
+            assert ctx is forwarder
+
+    # Opened and started exactly once; never torn down on context exit.
+    assert mock_open_tunnel.call_count == 1
+    assert forwarder.start.call_count == 1
+    forwarder.stop.assert_not_called()
+
+
+@patch("superset.extensions.ssh.sshtunnel.open_tunnel")
+def test_pooled_dead_tunnel_is_reopened(mock_open_tunnel: Mock) -> None:
+    """A pooled tunnel whose transport has died is stopped and transparently
+    reopened on the next acquisition."""
+    dead = _fake_forwarder(active=False)
+    alive = _fake_forwarder(local_port=5678)
+    mock_open_tunnel.side_effect = [dead, alive]
+    manager = _make_manager(pool=True)
+    tunnel = _pool_tunnel()
+
+    with manager.create_tunnel(
+        tunnel, "postgresql://u:p@db.example.com:5432/ex"
+    ) as ctx:
+        assert ctx is dead
+
+    with manager.create_tunnel(
+        tunnel, "postgresql://u:p@db.example.com:5432/ex"
+    ) as ctx:
+        assert ctx is alive
+
+    assert mock_open_tunnel.call_count == 2
+    dead.stop.assert_called_once()
+
+
+@patch("superset.extensions.ssh.sshtunnel.open_tunnel")
+def test_pool_keys_tunnels_by_connection_params(mock_open_tunnel: Mock) -> None:
+    """Different remote targets get their own pooled tunnel."""
+    mock_open_tunnel.side_effect = [_fake_forwarder(), _fake_forwarder(5678)]
+    manager = _make_manager(pool=True)
+    tunnel = _pool_tunnel()
+
+    with manager.create_tunnel(tunnel, "postgresql://u:p@db-a.example.com:5432/ex"):
+        pass
+    with manager.create_tunnel(tunnel, "postgresql://u:p@db-b.example.com:5432/ex"):
+        pass
+
+    assert mock_open_tunnel.call_count == 2
+
+
+@patch("superset.extensions.ssh.sshtunnel.open_tunnel")
+def test_pooling_disabled_opens_per_call(mock_open_tunnel: Mock) -> None:
+    """With pooling off, every call opens a fresh forwarder (historical behavior)."""
+    manager = _make_manager(pool=False)
+    assert manager._tunnel_pool is None
+    tunnel = _pool_tunnel()
+
+    result = manager.create_tunnel(tunnel, "postgresql://u:p@db.example.com:5432/ex")
+    # The raw forwarder is returned directly (it is its own context manager).
+    assert result is mock_open_tunnel.return_value
+    manager.create_tunnel(tunnel, "postgresql://u:p@db.example.com:5432/ex")
+
+    assert mock_open_tunnel.call_count == 2
+
+
+@patch("superset.extensions.ssh.sshtunnel.open_tunnel")
+def test_pool_close_all_stops_and_clears(mock_open_tunnel: Mock) -> None:
+    from superset.extensions.ssh import SSHTunnelPool
+
+    forwarder = _fake_forwarder()
+    mock_open_tunnel.return_value = forwarder
+    pool = SSHTunnelPool()
+    params = {
+        "ssh_address_or_host": ("ssh.example.com", 22),
+        "ssh_username": "user",
+        "remote_bind_address": ("db.example.com", 5432),
+        "local_bind_address": ("127.0.0.1",),
+    }
+    pool.acquire(params)
+
+    pool.close_all()
+
+    forwarder.stop.assert_called_once()
+    assert pool._entries == {}
+
+
+def test_tunnel_cache_key_hashes_secrets_and_is_stable() -> None:
+    from superset.extensions.ssh import _tunnel_cache_key
+
+    base = {
+        "ssh_address_or_host": ("ssh.example.com", 22),
+        "ssh_username": "user",
+        "remote_bind_address": ("db.example.com", 5432),
+        "local_bind_address": ("127.0.0.1",),
+        "ssh_password": "super-secret",
+    }
+
+    key = _tunnel_cache_key(base)
+    # Deterministic for identical params...
+    assert key == _tunnel_cache_key(dict(base))
+    # ...never leaks the plaintext secret...
+    assert "super-secret" not in key
+    # ...and a credential change forces a distinct tunnel.
+    assert key != _tunnel_cache_key({**base, "ssh_password": "different"})
 
 
 def test_ssh_tunnel_schema_round_trips_server_host_key() -> None:
